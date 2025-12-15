@@ -1,7 +1,9 @@
 import os
-from flask import Flask
+import time
+from flask import Flask, jsonify
 
 app = Flask(__name__)
+START_TIME = time.time()
 
 @app.route('/')
 def hello():
@@ -32,6 +34,14 @@ def hello():
 </body>
 </html>
 '''
+
+@app.route('/health')
+def health():
+    return jsonify({
+        'status': 'healthy',
+        'uptime_seconds': round(time.time() - START_TIME, 2),
+        'region': 'UK South'
+    })
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8000))
