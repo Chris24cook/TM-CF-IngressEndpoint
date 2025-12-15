@@ -1,46 +1,59 @@
-# Azure Network Probe
+# Hello World from CC
 
-A Python Flask utility for network diagnostics in Azure App Service Linux containers.
+A simple Python Flask web app for Azure App Service.
 
-## Features
+## What It Does
 
-- **Health Check**: Azure-compatible health endpoint
-- **Latency Testing**: Simple ping/pong endpoint
-- **Header Inspection**: View Azure proxy headers (X-Forwarded-For, X-Azure-ClientIP, etc.)
-- **DNS Lookup**: Resolve any hostname
-- **TCP Port Testing**: Test connectivity to any host:port
-- **Traceroute**: Trace network routes (if available)
-- **Load Simulation**: Test timeout configurations
-- **Environment Info**: View safe Azure environment variables
+Displays "Hello World from CC" when you visit the web page.
 
-## Quick Deploy
+## Files
 
-1. Download both files (network_probe.py and requirements.txt)
-2. Run the Azure CLI commands:
+- `network_probe.py` - The Flask application
+- `requirements.txt` - Dependencies (flask==3.0.0)
 
-```bash
-az login
-az group create --name NetProbeRG --location eastus
-az appservice plan create --name NetProbePlan --resource-group NetProbeRG --sku B1 --is-linux
-az webapp up --sku F1 --name YOUR-UNIQUE-NAME --resource-group NetProbeRG --runtime "PYTHON:3.11"
+## Deploy to Azure
+
+### Step 1: Create Web App in Azure Portal
+
+1. Go to [portal.azure.com](https://portal.azure.com)
+2. Click **Create a resource** → **Web App**
+3. Fill in:
+   - **Subscription**: Your subscription
+   - **Resource Group**: Create new or use existing
+   - **Name**: Choose a unique name (e.g., `cc-hello-world`)
+   - **Publish**: **Code**
+   - **Runtime stack**: **Python 3.11**
+   - **Operating System**: **Linux**
+   - **Region**: Choose closest to you
+
+### Step 2: Connect to GitHub
+
+4. Click **Deployment** tab
+5. Set **Continuous deployment**: **Enable**
+6. Sign in to GitHub
+7. Select:
+   - **Organization**: Chris24cook
+   - **Repository**: TM-CF-IngressEndpoint
+   - **Branch**: main
+
+### Step 3: Create & Wait
+
+8. Click **Review + create** → **Create**
+9. Wait 2-3 minutes for deployment
+
+### Step 4: Access Your App
+
+Your app will be available at:
+```
+https://<your-app-name>.azurewebsites.net
 ```
 
-## Endpoints
+Azure automatically handles:
+- **Port 443** (HTTPS) - Public access with SSL
+- **Port 80** (HTTP) - Redirects to HTTPS
 
-| Endpoint | Description |
-|----------|-------------|
-| `/` | Status & system info |
-| `/health` | Health check for Azure |
-| `/ping` | Simple latency test |
-| `/debug/headers` | View all request headers |
-| `/debug/env` | Azure environment variables |
-| `/debug/interfaces` | Network interfaces |
-| `/dns/<hostname>` | DNS lookup |
-| `/tcp-test/<host>/<port>` | TCP connectivity test |
-| `/traceroute/<target>` | Trace network route |
-| `/simulate-load/<seconds>` | Load simulation (max 30s) |
-| `/echo` | Echo request details |
+## Troubleshooting
 
-## License
-
-MIT
+If you get a 403 error:
+1. Go to App Service → **Authentication** → Set to **Disabled**
+2. Go to App Service → **Networking** → **Access Restrictions** → Allow all traffic
