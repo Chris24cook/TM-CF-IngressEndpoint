@@ -1,4 +1,5 @@
 import os
+import threading
 from flask import Flask
 
 app = Flask(__name__)
@@ -33,6 +34,20 @@ def hello():
 </html>
 '''
 
+def run_on_port(port):
+    app.run(host='0.0.0.0', port=port, threaded=True)
+
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8000))
-    app.run(host='0.0.0.0', port=port)
+    port_8000 = int(os.environ.get('PORT', 8000))
+    port_555 = 555
+    
+    print(f"Starting server on ports {port_8000} and {port_555}")
+    
+    t1 = threading.Thread(target=run_on_port, args=(port_8000,))
+    t2 = threading.Thread(target=run_on_port, args=(port_555,))
+    
+    t1.start()
+    t2.start()
+    
+    t1.join()
+    t2.join()
