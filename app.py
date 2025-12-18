@@ -12,7 +12,7 @@ def hello():
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CC Endpoint </title>
+    <title></title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -166,7 +166,7 @@ def hello():
     <div class="scan-line"></div>
     <div class="content">
         <div class="hex-border">
-            <h1>CC Endpoint </h1>
+            <h1></h1>
             <div class="status-line">
                 <span class="status-dot"></span>ONLINE
             </div>
