@@ -1,209 +1,176 @@
 import os
 import time
 import json
-import subprocess
-import platform
-import re
 from flask import Flask, Response
 
 app = Flask(__name__)
 START_TIME = time.time()
 
-MONITORED_HOSTS = [
-    {'name': 'Google DNS', 'host': '8.8.8.8'},
-    {'name': 'Cloudflare DNS', 'host': '1.1.1.1'},
-    {'name': 'Microsoft Azure', 'host': '13.107.42.14'},
-    {'name': 'AWS', 'host': '52.94.236.248'},
-]
-
-def ping_host(host):
-    param = '-c' if platform.system().lower() != 'windows' else '-n'
-    command = ['ping', param, '1', '-W', '2', host]
-    try:
-        start = time.time()
-        output = subprocess.check_output(command, stderr=subprocess.STDOUT, universal_newlines=True, timeout=5)
-        elapsed = (time.time() - start) * 1000
-        match = re.search(r'time[=<](d+.?d*)s*ms', output)
-        response_time = float(match.group(1)) if match else round(elapsed, 2)
-        return {'status': 'online', 'response_time': round(response_time, 2), 'reachable': True}
-    except:
-        return {'status': 'offline', 'response_time': None, 'reachable': False}
-
-def get_routes():
-    try:
-        if platform.system().lower() == 'windows':
-            output = subprocess.check_output(['route', 'print'], universal_newlines=True, timeout=10)
-        else:
-            output = subprocess.check_output(['ip', 'route'], universal_newlines=True, timeout=10)
-        return output
-    except Exception as e:
-        return f'Route info unavailable: {str(e)}'
-
 @app.route('/')
-def dashboard():
-    region = os.environ.get('REGION', 'UK South')
-    results = []
-    for h in MONITORED_HOSTS:
-        r = ping_host(h['host'])
-        r['name'] = h['name']
-        r['host'] = h['host']
-        results.append(r)
-    
-    routes = get_routes()
-    uptime = round(time.time() - START_TIME, 2)
-    
-    hosts_html = ''
-    for r in results:
-        status_class = 'online' if r['reachable'] else 'offline'
-        time_display = f"{r['response_time']} ms" if r['reachable'] else 'Unreachable'
-        time_class = 'slow' if r['reachable'] and r['response_time'] > 100 else ''
-        hosts_html += f'''
-        <div class="host-card">
-            <div class="host-header">
-                <span class="status-dot {status_class}"></span>
-                <span class="host-name">{r['name']}</span>
-            </div>
-            <div class="host-ip">{r['host']}</div>
-            <div class="response-time {status_class} {time_class}">{time_display}</div>
-        </div>'''
-    
-    return f'''
+def hello():
+    return '''
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Network Dashboard - {region}</title>
-    <meta http-equiv="refresh" content="30">
+    <title>CC Endpoint </title>
     <style>
-        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: #0a0a1a;
             color: #fff;
-            min-height: 100vh;
-            padding: 20px;
-        }}
-        .container {{ max-width: 1200px; margin: 0 auto; }}
-        h1 {{
-            text-align: center;
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }}
-        .region-badge {{
-            text-align: center;
-            margin-bottom: 30px;
-        }}
-        .region-badge span {{
-            background: #667eea;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-size: 1em;
-        }}
-        .stats-bar {{
+            height: 100vh;
             display: flex;
             justify-content: center;
-            gap: 30px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-        }}
-        .stat {{
-            background: rgba(255,255,255,0.1);
-            padding: 15px 25px;
-            border-radius: 10px;
-            text-align: center;
-        }}
-        .stat-value {{ font-size: 1.8em; font-weight: bold; color: #10b981; }}
-        .stat-label {{ color: #9ca3af; font-size: 0.9em; }}
-        .section {{ margin-bottom: 30px; }}
-        .section-title {{
-            font-size: 1.3em;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #667eea;
-        }}
-        .hosts-grid {{
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-        }}
-        .host-card {{
-            background: rgba(255,255,255,0.08);
-            border-radius: 12px;
-            padding: 20px;
-            border-left: 4px solid #667eea;
-        }}
-        .host-header {{ display: flex; align-items: center; margin-bottom: 8px; }}
-        .status-dot {{
-            width: 12px; height: 12px;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+        .grid-bg {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                linear-gradient(rgba(102,126,234,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(102,126,234,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+        @keyframes gridMove {
+            0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
+            100% { transform: perspective(500px) rotateX(60deg) translateY(50px); }
+        }
+        .glow-orb {
+            position: absolute;
+            width: 400px;
+            height: 400px;
             border-radius: 50%;
-            margin-right: 10px;
-        }}
-        .status-dot.online {{ background: #10b981; box-shadow: 0 0 10px #10b981; }}
-        .status-dot.offline {{ background: #ef4444; box-shadow: 0 0 10px #ef4444; }}
-        .host-name {{ font-weight: bold; font-size: 1.1em; }}
-        .host-ip {{ color: #9ca3af; font-size: 0.9em; margin-bottom: 10px; }}
-        .response-time {{
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: bold;
-        }}
-        .response-time.online {{ background: rgba(16,185,129,0.2); color: #10b981; }}
-        .response-time.offline {{ background: rgba(239,68,68,0.2); color: #ef4444; }}
-        .response-time.slow {{ background: rgba(245,158,11,0.2); color: #f59e0b; }}
-        .routes-box {{
-            background: #0d1117;
-            border-radius: 10px;
-            padding: 20px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.85em;
-            color: #10b981;
-            overflow-x: auto;
-            white-space: pre;
-            max-height: 300px;
-            overflow-y: auto;
-        }}
-        .footer {{
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: pulse 4s ease-in-out infinite;
+        }
+        .orb1 { background: #667eea; top: -100px; left: -100px; }
+        .orb2 { background: #764ba2; bottom: -100px; right: -100px; animation-delay: 2s; }
+        .orb3 { background: #06b6d4; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.2; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.1); }
+        }
+        .particles {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow: hidden;
+        }
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #667eea;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #667eea;
+            animation: float 15s infinite linear;
+        }
+        @keyframes float {
+            0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
+        }
+        .content {
+            position: relative;
+            z-index: 10;
             text-align: center;
-            margin-top: 30px;
-            color: #6b7280;
+        }
+        .hex-border {
+            position: relative;
+            padding: 60px 80px;
+            background: rgba(10,10,26,0.8);
+            border: 2px solid rgba(102,126,234,0.5);
+            clip-path: polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%);
+        }
+        .hex-border::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: linear-gradient(45deg, #667eea, #764ba2, #06b6d4, #667eea);
+            clip-path: polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%);
+            z-index: -1;
+            animation: borderGlow 3s linear infinite;
+        }
+        @keyframes borderGlow {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+        h1 {
+            font-size: 3em;
+            font-weight: 300;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, #667eea, #764ba2, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: none;
+            animation: textGlow 2s ease-in-out infinite alternate;
+        }
+        @keyframes textGlow {
+            from { filter: drop-shadow(0 0 20px rgba(102,126,234,0.5)); }
+            to { filter: drop-shadow(0 0 40px rgba(102,126,234,0.8)); }
+        }
+        .status-line {
+            margin-top: 20px;
             font-size: 0.9em;
-        }}
+            color: #10b981;
+            letter-spacing: 3px;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #667eea, transparent);
+            animation: scan 3s linear infinite;
+        }
+        @keyframes scan {
+            0% { top: 0; opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Network Dashboard</h1>
-        <div class="region-badge"><span>CC Endpoint {region}</span></div>
-        
-        <div class="stats-bar">
-            <div class="stat">
-                <div class="stat-value">{len([r for r in results if r['reachable']])}/{len(results)}</div>
-                <div class="stat-label">Hosts Online</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value">{round(sum(r['response_time'] for r in results if r['reachable']) / max(1, len([r for r in results if r['reachable']])), 1)} ms</div>
-                <div class="stat-label">Avg Response</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value">{uptime}s</div>
-                <div class="stat-label">Uptime</div>
+    <div class="grid-bg"></div>
+    <div class="glow-orb orb1"></div>
+    <div class="glow-orb orb2"></div>
+    <div class="glow-orb orb3"></div>
+    <div class="particles">
+        <div class="particle" style="left:10%;animation-delay:0s"></div>
+        <div class="particle" style="left:20%;animation-delay:2s"></div>
+        <div class="particle" style="left:30%;animation-delay:4s"></div>
+        <div class="particle" style="left:50%;animation-delay:1s"></div>
+        <div class="particle" style="left:70%;animation-delay:3s"></div>
+        <div class="particle" style="left:80%;animation-delay:5s"></div>
+        <div class="particle" style="left:90%;animation-delay:2.5s"></div>
+    </div>
+    <div class="scan-line"></div>
+    <div class="content">
+        <div class="hex-border">
+            <h1>CC Endpoint </h1>
+            <div class="status-line">
+                <span class="status-dot"></span>ONLINE
             </div>
         </div>
-        
-        <div class="section">
-            <div class="section-title">Ping Status</div>
-            <div class="hosts-grid">{hosts_html}</div>
-        </div>
-        
-        <div class="section">
-            <div class="section-title">Route Table</div>
-            <div class="routes-box">{routes}</div>
-        </div>
-        
-        <div class="footer">Auto-refreshes every 30 seconds | Last update: {time.strftime('%H:%M:%S')}</div>
     </div>
 </body>
 </html>
@@ -214,23 +181,9 @@ def health():
     data = {
         'status': 'healthy',
         'uptime_seconds': round(time.time() - START_TIME, 2),
-        'region': os.environ.get('REGION', 'UK South')
+        'region': ''
     }
     return Response(json.dumps(data), mimetype='application/json')
-
-@app.route('/api/ping')
-def api_ping():
-    results = []
-    for h in MONITORED_HOSTS:
-        r = ping_host(h['host'])
-        r['name'] = h['name']
-        r['host'] = h['host']
-        results.append(r)
-    return Response(json.dumps(results), mimetype='application/json')
-
-@app.route('/api/routes')
-def api_routes():
-    return Response(json.dumps({'routes': get_routes()}), mimetype='application/json')
 
 application = app
 
